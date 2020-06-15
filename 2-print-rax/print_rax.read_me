@@ -1,0 +1,61 @@
+rappel binaire :1 2 4 8 16 32 64 128
+------------------------
+Le programme prend en charge un nombre hexa qui sera converti en valeur de caractère (ascii).
+0x1234AB -> '1234AB'
+--------------------------
+
+
+
+codes: '0123456789ABCDEF'
+mov rax, 0x1122334455667788 :rax : 0x1122334455667788
+soit rax :  0001 0001 0010 0010 0011 0011 0100 0100 0101 0101 0110 0110 0111 0111 1000 1000
+soit rax :  0001000100100010001100110100010001010101011001100111011110001000
+
+mov rdi, 1 : rdi: 1
+mov rdx, 1 : rdx: 1
+mov rcx, 64 : rcx: 64
+
+--début de boucle---
+push rax --> rax dans la mémoire
+				pile: 0001000100100010001100110100010001010101011001100111011110001000 |
+
+rcx: 1000000 - 100 = 111100 (d60)  donc cl = 111100 (d60) #cl poids faible de rcx
+
+sar rax, cl : 0001  décalage de rax de 60 digits vers la droite.
+and rax, 0xf : 0001 and 1111 : 0001
+
+   [codes + rax] : &codes + b0001 (&codes premier digit pointant sur la valeur de codes en mémoire)
+lea rsi, [codes + rax] : rsi: '123456789ABCDEF'
+
+mov rax,1 : rax: 1
+push rcx -> rcx: dans pile mémoire
+				pile: 111100 (d60) | 0001000100100010001100110100010001010101011001100111011110001000 |
+
+syscall : rax:1 rdi:1 rsi: '123456789ABCDEF' rdx: 1
+=> output '1' (caractère '123456789ABCDEF' de longueur rdx:1 soit caractère '1')
+
+pop rcx <- valeur de la mémoire dans rcx (donc valeur sauvegarder de rcx)
+			(en effet rcx est une valeur toucher lors du syscall).
+
+rcx : 111100 (d60)
+				Pile: 0001000100100010001100110100010001010101011001100111011110001000 |	
+
+pop rax <-- valeur du haut de la pile mémoire dans rax (qui était la valeur de rax sauvgardée plus haut).
+
+soit rax: 0001000100100010001100110100010001010101011001100111011110001000
+				Pile : vide
+test rcx, rcx (test rcx par rapport à rcx => return 1
+jnz ---début de boucle--- (jump if zero, le return étant 1 : quand rcx (compteur décrémenté de 4 en 4 sera à 0 le return sera à 0).
+
+
+---Porchaine boucle----
+idem : la différence se joue au and logique
+	on aura 
+	rcx passant de 60 à 56
+	le décalage sar fera un rax : 00010001
+	le and 0xf fera : 00010001 and 00001111 : 0000 0001
+	[codes + rax] pointera toujours sur la valeur codes 1 (boucle prochaine 2, puis 2, puis 3 etc.)
+
+
+
+
